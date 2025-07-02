@@ -2,32 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Interactive Galaxy</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100%; background: black; overflow: hidden; }
-    canvas { display: block; width: 100vw; height: 100vh; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      background: black;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
   </style>
 </head>
 <body>
   <canvas id="galaxy"></canvas>
   <script>
     const canvas = document.getElementById('galaxy');
-    const ctx = canvas.getContext('2D');
+    const ctx = canvas.getContext('2d');
     let width, height;
 
     function resize() {
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
     }
-
     resize();
     window.addEventListener('resize', resize);
 
     const CENTER = { x: width / 2, y: height / 2 };
-    const stars = [];
     const STAR_COUNT = 400;
+    const stars = [];
 
     for (let i = 0; i < STAR_COUNT; i++) {
       const angle = Math.random() * Math.PI * 2;
@@ -38,21 +49,35 @@
         distance,
         speed,
         size: Math.random() * 2 + 0.5,
-        color: `hsl(${Math.random() * 360}, 100%, 70%)`
+        color: `hsl(${Math.random() * 360}, 100%, 70%)`,
+        x: CENTER.x + Math.cos(angle) * distance,
+        y: CENTER.y + Math.sin(angle) * distance,
+        vx: 0,
+        vy: 0,
       });
     }
 
     function animate() {
+      // Fade previous frame slightly for trailing effect
       ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
       ctx.fillRect(0, 0, width, height);
 
       for (const star of stars) {
         star.angle += star.speed;
-        const x = CENTER.x + Math.cos(star.angle) * star.distance;
-        const y = CENTER.y + Math.sin(star.angle) * star.distance;
+        const targetX = CENTER.x + Math.cos(star.angle) * star.distance;
+        const targetY = CENTER.y + Math.sin(star.angle) * star.distance;
 
+        // Smooth movement
+        star.vx += (targetX - star.x) * 0.01;
+        star.vy += (targetY - star.y) * 0.01;
+        star.vx *= 0.9; // friction to slow velocity
+        star.vy *= 0.9;
+        star.x += star.vx;
+        star.y += star.vy;
+
+        // Draw star
         ctx.beginPath();
-        ctx.arc(x, y, star.size, 0, Math.PI * 2);
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
         ctx.fillStyle = star.color;
         ctx.fill();
       }
